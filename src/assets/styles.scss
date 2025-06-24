@@ -1,0 +1,163 @@
+/* You can add global styles to this file, and also import other style files */
+@use 'primeicons/primeicons.css';
+@use '@/assets/tailwind.css';
+@use '@/assets/layout/layout.scss';
+@use '@/assets/demo/demo.scss';
+
+/* Global styles for Task Dashboard */
+.task-progress {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin: 0 1rem;
+}
+
+.circular-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+}
+
+.streak-badge, .points-badge {
+    background: var(--surface-card);
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.streak-badge i {
+    color: #F97316;
+}
+
+.points-badge i {
+    color: #FFD700;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    margin-left: 0.5rem;
+}
+
+/* Motivational message themes */
+.motivational-message {
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.beginner-theme {
+    background: linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%);
+    border-left: 4px solid #0EA5E9;
+}
+
+.streak-theme {
+    background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+    border-left: 4px solid #F59E0B;
+}
+
+.week-theme {
+    background: linear-gradient(135deg, #DCFCE7 0%, #BBF7D0 100%);
+    border-left: 4px solid #22C55E;
+}
+
+.month-theme {
+    background: linear-gradient(135deg, #F3E8FF 0%, #E9D5FF 100%);
+    border-left: 4px solid #A855F7;
+}
+
+.points-theme {
+    background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+    border-left: 4px solid #EF4444;
+}
+
+.legend-theme {
+    background: linear-gradient(135deg, #FEF9C3 0%, #FEF08A 100%);
+    border-left: 4px solid #EAB308;
+}
+
+/* Activity Log styles */
+.activity-log {
+    .p-datatable {
+        .p-datatable-thead > tr > th {
+            background: var(--surface-card);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        
+        .p-datatable-tbody > tr > td {
+            padding: 1rem;
+        }
+    }
+}
+
+/* Leaderboard styles */
+.leaderboard {
+    .p-datatable {
+        .p-datatable-thead > tr > th {
+            background: var(--surface-card);
+            color: var(--text-color);
+            font-weight: 600;
+        }
+        
+        .p-datatable-tbody > tr > td {
+            padding: 1rem;
+        }
+    }
+}
+
+:root {
+    --primary-color: #10b981;
+    --primary-color-text: #fff;
+    --surface-card: #fff;
+    --surface-100: #f3f4f6;
+    --surface-200: #e5e7eb;
+    --surface-hover: #f0fdfa;
+    --text-color: #222;
+    --text-color-secondary: #6b7280;
+}
+
+body {
+    background: var(--surface-100);
+    color: var(--text-color);
+    font-family: 'Lato', Arial, sans-serif;
+}
+
+.card {
+    background: var(--surface-card);
+    border-radius: 16px;
+    box-shadow: 0 2px 16px 0 rgba(16,185,129,0.06);
+    padding: 2rem 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.layout-sidebar {
+    background: var(--surface-card);
+    border-right: 1px solid var(--surface-200);
+}
+
+.layout-main-container {
+    background: var(--surface-100);
+}
+
+.app-logo-text {
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    letter-spacing: 1px;
+    margin-left: 0.5rem;
+}
