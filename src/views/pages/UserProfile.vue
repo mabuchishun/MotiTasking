@@ -16,7 +16,8 @@
                     <div class="flex-1">
                         <div class="field">
                             <label for="name" class="font-bold mb-2 block">Display Name</label>
-                            <InputText id="name" v-model="userName" class="w-full" />
+                            <InputText id="name" v-model="userName" class="w-full" :class="{'p-invalid': nameError}" />
+                            <small v-if="nameError" class="p-error">{{ nameError }}</small>
                         </div>
 
                         <div class="field mt-4">
@@ -65,7 +66,8 @@ export default {
         return {
             userName: 'User',
             selectedAvatar: '',
-            availableAvatars: AVATAR_OPTIONS
+            availableAvatars: AVATAR_OPTIONS,
+            nameError: ''
         }
     },
     computed: {
@@ -93,6 +95,11 @@ export default {
             this.selectedAvatar = avatar;
         },
         saveProfile() {
+            this.nameError = '';
+            if (!this.userName || !this.userName.trim()) {
+                this.nameError = 'Display name cannot be blank.';
+                return;
+            }
             const profile = {
                 name: this.userName,
                 avatar: this.selectedAvatar

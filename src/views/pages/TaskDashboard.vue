@@ -12,26 +12,7 @@
                                 <div class="text-sm text-500">{{ userTitle }}</div>
                             </div>
                         </div>
-                        <h5 class="mr-3">Total Task Completed</h5>
-                        <div class="completed-tasks-number">{{ completedTasks }}</div>
-                    </div>
-                    <div class="flex align-items-center">
-                        <div class="streak-badge mr-3" v-if="currentStreak > 0">
-                            <i class="pi pi-fire mr-2"></i>
-                            <span class="streak-text">{{ currentStreak }} Day Streak</span>
-                        </div>
-                        <div class="points-badge mr-3">
-                            <i class="pi pi-star-fill mr-2"></i>
-                            <span class="points-text">{{ totalPoints }} Points</span>
-                        </div>
-                        <div class="achievement-badges">
-                            <Badge v-for="badge in unlockedBadges" 
-                                   :key="badge.id" 
-                                   :value="badge.name" 
-                                   :severity="badge.severity"
-                                   class="mr-2" />
-                        </div>
-                        <Button label="New Task" icon="pi pi-plus" @click="openNew" class="ml-3" />
+                        <Button label="New Task" icon="pi pi-plus" @click="openNew" class="ml-4 animated-action" v-tooltip.top="'Create a new task'" />
                     </div>
                 </div>
 
@@ -49,7 +30,7 @@
                     :rowsPerPageOptions="[5, 10, 25]" responsiveLayout="scroll">
                     <Column field="completed" header="Status" style="width: 5rem">
                         <template #body="slotProps">
-                            <Checkbox v-model="slotProps.data.completed" :binary="true" @change="handleTaskCompletion(slotProps.data)" />
+                            <Checkbox v-model="slotProps.data.completed" :binary="true" @change="handleTaskCompletion(slotProps.data)" :disabled="slotProps.data.completed" />
                         </template>
                     </Column>
                     <Column field="title" header="Task" style="min-width: 200px">
@@ -73,8 +54,8 @@
                     <Column field="description" header="Description" style="min-width: 250px" />
                     <Column header="Actions" style="width: 110px">
                         <template #body="slotProps">
-                            <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" @click="editTask(slotProps.data)" />
-                            <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="confirmDeleteTask(slotProps.data)" />
+                            <Button icon="pi pi-pencil" class="p-button-text p-button-sm mr-2" @click="editTask(slotProps.data)" v-tooltip.top="'Edit task'" />
+                            <Button icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger" @click="confirmDeleteTask(slotProps.data)" v-tooltip.top="'Delete task'" />
                         </template>
                     </Column>
                 </DataTable>
@@ -93,13 +74,17 @@
             </div>
             <div class="field">
                 <label for="deadline">Deadline</label>
-                <Calendar id="deadline" v-model="task.deadline" dateFormat="dd/mm/yy" :showIcon="true" />
+                <Calendar id="deadline" v-model="task.deadline" dateFormat="dd/mm/yy" :showIcon="true" :class="{'p-invalid': submitted && (deadlineError)}" :minDate="today" />
+                <small class="p-error" v-if="submitted && deadlineError">{{ deadlineError }}</small>
             </div>
             <div class="field">
                 <label for="priority">Priority</label>
                 <Dropdown id="priority" v-model="task.priority" :options="priorities" optionLabel="name" placeholder="Select a Priority">
                     <template #value="slotProps">
-                        <Tag :severity="getPrioritySeverity(slotProps.value)" :value="slotProps.value" />
+                        <span v-if="slotProps.value && slotProps.value.name">
+                            <Tag :severity="getPrioritySeverity(slotProps.value.name)" :value="slotProps.value.name" />
+                        </span>
+                        <span v-else class="p-dropdown-label p-inputtext p-placeholder">Select a Priority</span>
                     </template>
                     <template #option="slotProps">
                         <Tag :severity="getPrioritySeverity(slotProps.option.name)" :value="slotProps.option.name" />
@@ -118,19 +103,14 @@
 <script>
 import TaskService from '@/services/TaskService';
 import Knob from 'primevue/knob';
+import Tooltip from 'primevue/tooltip';
+import { BADGES } from '@/services/badges';
 
 const POINTS_PER_PRIORITY = {
     'High': 30,
     'Medium': 20,
     'Low': 10
 };
-
-const BADGES = [
-    { id: 1, name: 'Novice', threshold: 100, severity: 'info' },
-    { id: 2, name: 'Intermediate', threshold: 500, severity: 'success' },
-    { id: 3, name: 'Expert', threshold: 1000, severity: 'warning' },
-    { id: 4, name: 'Master', threshold: 2000, severity: 'danger' }
-];
 
 const MOTIVATIONAL_MESSAGES = {
     beginner: {
@@ -187,6 +167,7 @@ export default {
                 completed: false
             },
             submitted: false,
+            deadlineError: '',
             priorities: [
                 { name: 'High' },
                 { name: 'Medium' },
@@ -200,7 +181,8 @@ export default {
                 name: 'User',
                 avatar: ''
             },
-            motivationalMessage: MOTIVATIONAL_MESSAGES.beginner
+            motivationalMessage: MOTIVATIONAL_MESSAGES.beginner,
+            today: new Date()
         }
     },
     computed: {
@@ -235,6 +217,15 @@ export default {
     created() {
         // Load data from TaskService
         this.loadData();
+        if (typeof this._taskServiceListener !== 'function') {
+            this._taskServiceListener = this.loadData;
+        }
+        TaskService.subscribe(this._taskServiceListener);
+    },
+    beforeUnmount() {
+        if (this._taskServiceListener) {
+            TaskService.unsubscribe(this._taskServiceListener);
+        }
     },
     activated() {
         // Reload user profile and stats when the page is activated (e.g., after navigating back)
@@ -288,8 +279,32 @@ export default {
         },
         saveTask() {
             this.submitted = true;
+            this.deadlineError = '';
 
-            if (this.task.title.trim()) {
+            // Validate deadline
+            if (!this.task.deadline) {
+                this.deadlineError = 'Deadline is required.';
+            } else {
+                const deadlineDate = new Date(this.task.deadline);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                deadlineDate.setHours(0, 0, 0, 0);
+                if (deadlineDate < today) {
+                    this.deadlineError = 'Deadline cannot be in the past.';
+                }
+            }
+
+            if (this.task.title.trim() && !this.deadlineError) {
+                // Always store deadline as ISO string yyyy-mm-dd
+                if (this.task.deadline instanceof Date) {
+                    this.task.deadline = this.task.deadline.toISOString().slice(0, 10);
+                } else if (typeof this.task.deadline === 'string') {
+                    // Try to parse and reformat if needed
+                    const d = new Date(this.task.deadline);
+                    if (!isNaN(d.getTime())) {
+                        this.task.deadline = d.toISOString().slice(0, 10);
+                    }
+                }
                 if (this.task.id) {
                     // Update existing task
                     TaskService.updateTask(this.task.id, this.task);
@@ -335,9 +350,10 @@ export default {
                     this.currentStreak++;
                 } else if (diffDays === 0) {
                     // Same day - no change to streak
+                    // But do not reset streak
                     return;
-                } else {
-                    // Streak broken - start new streak
+                } else if (diffDays > 1) {
+                    // Streak broken - reset to 1 (not 0, since user just completed a task today)
                     this.currentStreak = 1;
                 }
             } else {
@@ -345,7 +361,8 @@ export default {
                 this.currentStreak = 1;
             }
 
-            TaskService.updateStreak(this.currentStreak, today.toISOString());
+            TaskService.updateStreak(this.currentStreak);
+            TaskService.updateLastCompletionDate(new Date().toISOString());
             this.loadData();
 
             // Show streak notification
@@ -359,8 +376,26 @@ export default {
             }
         },
         handleTaskCompletion(task) {
-            // Persist the completed state
-            TaskService.updateTask(task.id, { completed: task.completed });
+            // If already completed, do nothing (should be disabled, but double check)
+            if (task.completed && TaskService.getTasks().find(t => t.id === task.id)?.completed) return;
+            // If marking as completed, set deadline to today if not set
+            if (task.completed && !task.deadline) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                task.deadline = `${yyyy}-${mm}-${dd}`;
+            }
+            // Always store deadline as yyyy-mm-dd if possible
+            if (task.deadline instanceof Date) {
+                task.deadline = task.deadline.toISOString().slice(0, 10);
+            } else if (typeof task.deadline === 'string') {
+                const d = new Date(task.deadline);
+                if (!isNaN(d.getTime())) {
+                    task.deadline = d.toISOString().slice(0, 10);
+                }
+            }
+            TaskService.updateTask(task.id, { completed: task.completed, deadline: task.deadline });
             if (task.completed) {
                 // Award points when task is completed
                 const points = POINTS_PER_PRIORITY[task.priority] || 10;
@@ -400,6 +435,7 @@ export default {
                     detail: `Congratulations! You've earned the ${badge.name} badge!`,
                     life: 5000
                 });
+                TaskService.addAchievement(badge);
             });
         },
         updateMotivationalMessage() {
@@ -625,5 +661,14 @@ export default {
     padding: 0.5rem 2rem;
     margin-top: 0.25rem;
     box-shadow: 0 2px 8px 0 rgba(16,185,129,0.08);
+}
+
+.animated-action {
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.animated-action:hover, .animated-action:focus {
+  box-shadow: 0 4px 16px 0 rgba(16,185,129,0.15);
+  transform: translateY(-2px) scale(1.04);
+  outline: none;
 }
 </style> 

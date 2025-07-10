@@ -24,11 +24,6 @@ const router = createRouter({
                     component: () => import('@/views/pages/UserProfile.vue')
                 },
                 {
-                    path: '/activity-log',
-                    name: 'activity-log',
-                    component: () => import('@/views/pages/ActivityLog.vue')
-                },
-                {
                     path: '/uikit/formlayout',
                     name: 'formlayout',
                     component: () => import('@/views/uikit/FormLayout.vue')
@@ -123,6 +118,11 @@ const router = createRouter({
                     path: '/leaderboard',
                     name: 'leaderboard',
                     component: () => import('@/views/pages/Leaderboard.vue')
+                },
+                {
+                    path: '/achievements',
+                    name: 'achievements',
+                    component: () => import('@/views/pages/AchievementsPage.vue')
                 }
             ]
         },

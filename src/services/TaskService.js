@@ -47,6 +47,19 @@ const INITIAL_DATA = {
 class TaskService {
     constructor() {
         this.initializeData();
+        this.listeners = [];
+    }
+
+    subscribe(listener) {
+        this.listeners.push(listener);
+    }
+
+    unsubscribe(listener) {
+        this.listeners = this.listeners.filter(l => l !== listener);
+    }
+
+    notify() {
+        this.listeners.forEach(listener => listener());
     }
 
     initializeData() {
@@ -78,6 +91,7 @@ class TaskService {
         data.tasks.push(newTask);
         this.saveData(data);
         LogService.logTaskCreated(newTask);
+        this.notify();
         return newTask;
     }
 
@@ -88,6 +102,7 @@ class TaskService {
             data.tasks[taskIndex] = { ...data.tasks[taskIndex], ...updates };
             this.saveData(data);
             LogService.logTaskCompleted(data.tasks[taskIndex]);
+            this.notify();
             return data.tasks[taskIndex];
         }
         return null;
@@ -97,6 +112,7 @@ class TaskService {
         const data = this.getData();
         data.tasks = data.tasks.filter(t => t.id !== taskId);
         this.saveData(data);
+        this.notify();
     }
 
     // User Stats Methods
@@ -115,6 +131,7 @@ class TaskService {
         data.userStats.totalPoints += points;
         this.saveData(data);
         LogService.logPointsEarned(points, task);
+        this.notify();
     }
 
     deductPoints(points, task) {
@@ -122,6 +139,7 @@ class TaskService {
         data.userStats.totalPoints -= points;
         this.saveData(data);
         LogService.logPointsDeducted(points, task);
+        this.notify();
     }
 
     updateStreak(streak) {
@@ -130,24 +148,28 @@ class TaskService {
         data.userStats.currentStreak = streak;
         this.saveData(data);
         LogService.logStreakUpdate(streak, previousStreak);
+        this.notify();
     }
 
     updateLastCompletionDate(date) {
         const data = this.getData();
         data.userStats.lastCompletionDate = date;
         this.saveData(data);
+        this.notify();
     }
 
     incrementCompletedTasks() {
         const data = this.getData();
         data.userStats.completedTasks += 1;
         this.saveData(data);
+        this.notify();
     }
 
     decrementCompletedTasks() {
         const data = this.getData();
         data.userStats.completedTasks = Math.max(0, data.userStats.completedTasks - 1);
         this.saveData(data);
+        this.notify();
     }
 
     // Achievement Methods

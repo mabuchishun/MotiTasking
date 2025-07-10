@@ -7,7 +7,7 @@ const navLinks = [
     { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/' },
     { label: 'Tasks', icon: 'pi pi-fw pi-list', to: '/tasks' },
     { label: 'Leaderboard', icon: 'pi pi-fw pi-trophy', to: '/leaderboard' },
-    { label: 'Activity Log', icon: 'pi pi-fw pi-history', to: '/activity-log' },
+    { label: 'Achievements', icon: 'pi pi-fw pi-star', to: '/achievements' },
     { label: 'Profile', icon: 'pi pi-fw pi-user', to: '/profile' }
 ];
 </script>
